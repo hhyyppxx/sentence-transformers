@@ -113,7 +113,7 @@ In our experiments we initiliazed the student model with the multilingual XLM-Ro
 ## Training 
 For a **fully automatic code example**, see [make_multilingual.py](make_multilingual.py). 
 
-This scripts downloads the [TED2020 corpus](https://github.com/UKPLab/sentence-transformers/blob/master/docs/datasets/TED2020.md?), a corpus with transcripts and translations from TED and TEDx talks. It than extends the monolingual `bert-base-nli-stsb-mean-tokens` model to several languages (en, de, es, it, fr, ar, tr). TED2020 contains parallel data for more than 100 languages, hence, you can simple change the script and train a multilingual model in your favorite languages.
+This scripts downloads the [TED2020 corpus](https://github.com/UKPLab/sentence-transformers/blob/master/docs/datasets/TED2020.md?), a corpus with transcripts and translations from TED and TEDx talks. It than extends a monolingual model to several languages (en, de, es, it, fr, ar, tr). TED2020 contains parallel data for more than 100 languages, hence, you can simple change the script and train a multilingual model in your favorite languages.
 
 
 
@@ -188,7 +188,7 @@ dev_trans_acc = evaluation.TranslationEvaluator(src_sentences, trg_sentences, na
 You can also measure the semantic textual similarity (STS) between sentence pairs in different languages:
 
 ```python
-sts_evaluator = evaluation.EmbeddingSimilarityEvaluatorFromList(sentences1, senteces2, scores)
+sts_evaluator = evaluation.EmbeddingSimilarityEvaluatorFromList(sentences1, sentences2, scores)
 ```
 
 Where `sentences1` and `sentences2` are lists of sentences and score is numeric value indicating the sematic similarity between `sentences1[i]` and `sentences2[i]`.

@@ -22,7 +22,7 @@ from LexRank import degree_centrality_scores
 
 
 
-model = SentenceTransformer('paraphrase-distilroberta-base-v1')
+model = SentenceTransformer('all-MiniLM-L6-v2')
 
 # Our input document we want to summarize
 # As example, we take the first section from Wikipedia
@@ -44,7 +44,7 @@ print("Num sentences:", len(sentences))
 embeddings = model.encode(sentences, convert_to_tensor=True)
 
 #Compute the pair-wise cosine similarities
-cos_scores = util.pytorch_cos_sim(embeddings, embeddings).numpy()
+cos_scores = util.cos_sim(embeddings, embeddings).numpy()
 
 #Compute the centrality for each sentence
 centrality_scores = degree_centrality_scores(cos_scores, threshold=None)

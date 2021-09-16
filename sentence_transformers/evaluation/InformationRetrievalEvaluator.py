@@ -87,68 +87,17 @@ class InformationRetrievalEvaluator(SentenceEvaluator):
             for k in map_at_k:
                 self.csv_headers.append("{}-MAP@{}".format(score_name, k))
 
-    def __call__(self, model, output_path: str = None, epoch: int = -1, steps: int = -1, corpus_model = None, corpus_embeddings: Tensor = None) -> float:
+    def __call__(self, model, output_path: str = None, epoch: int = -1, steps: int = -1, *args, **kwargs) -> float:
         if epoch != -1:
             out_txt = " after epoch {}:".format(epoch) if steps == -1 else " in epoch {} after {} steps:".format(epoch, steps)
         else:
             out_txt = ":"
 
-        if corpus_model is None:
-            corpus_model = model
-
         logger.info("Information Retrieval Evaluation on " + self.name + " dataset" + out_txt)
 
-        max_k = max(max(self.mrr_at_k), max(self.ndcg_at_k), max(self.accuracy_at_k), max(self.precision_recall_at_k), max(self.map_at_k))
+        scores = self.compute_metrices(model, *args, **kwargs)
 
-        # Compute embedding for the queries
-        query_embeddings = model.encode(self.queries, show_progress_bar=self.show_progress_bar, batch_size=self.batch_size, convert_to_tensor=True)
-
-        queries_result_list = {}
-        for name in self.score_functions:
-            queries_result_list[name] = [[] for _ in range(len(query_embeddings))]
-
-        itr = range(0, len(self.corpus), self.corpus_chunk_size)
-
-        if self.show_progress_bar:
-            itr = tqdm(itr, desc='Corpus Chunks')
-
-        #Iterate over chunks of the corpus
-        for corpus_start_idx in itr:
-            corpus_end_idx = min(corpus_start_idx + self.corpus_chunk_size, len(self.corpus))
-
-            #Encode chunk of corpus
-            if corpus_embeddings is None:
-                sub_corpus_embeddings = corpus_model.encode(self.corpus[corpus_start_idx:corpus_end_idx], show_progress_bar=False, batch_size=self.batch_size, convert_to_tensor=True)
-            else:
-                sub_corpus_embeddings = corpus_embeddings[corpus_start_idx:corpus_end_idx]
-
-            #Compute cosine similarites
-            for name, score_function in self.score_functions.items():
-                cos_scores = score_function(query_embeddings, sub_corpus_embeddings)
-
-                #Get top-k values
-                cos_scores_top_k_values, cos_scores_top_k_idx = torch.topk(cos_scores, min(max_k, len(cos_scores[0])), dim=1, largest=True, sorted=False)
-                cos_scores_top_k_values = cos_scores_top_k_values.cpu().tolist()
-                cos_scores_top_k_idx = cos_scores_top_k_idx.cpu().tolist()
-
-                for query_itr in range(len(query_embeddings)):
-                    for sub_corpus_id, score in zip(cos_scores_top_k_idx[query_itr], cos_scores_top_k_values[query_itr]):
-                        corpus_id = self.corpus_ids[corpus_start_idx+sub_corpus_id]
-                        queries_result_list[name][query_itr].append({'corpus_id': corpus_id, 'score': score})
-
-        logger.info("Queries: {}".format(len(self.queries)))
-        logger.info("Corpus: {}\n".format(len(self.corpus)))
-
-        #Compute scores
-        scores = {name: self.compute_metrics(queries_result_list[name]) for name in self.score_functions}
-
-        #Output
-        for name in self.score_function_names:
-            logging.info("Score-Function: {}".format(name))
-            self.output_scores(scores[name])
-
-
-        #Write results to disc
+        # Write results to disc
         if output_path is not None and self.write_csv:
             csv_path = os.path.join(output_path, self.csv_file)
             if not os.path.isfile(csv_path):
@@ -177,7 +126,7 @@ class InformationRetrievalEvaluator(SentenceEvaluator):
                 for k in self.map_at_k:
                     output_data.append(scores[name]['map@k'][k])
 
-            fOut.write(",".join(map(str,output_data)))
+            fOut.write(",".join(map(str, output_data)))
             fOut.write("\n")
             fOut.close()
 
@@ -186,6 +135,55 @@ class InformationRetrievalEvaluator(SentenceEvaluator):
         else:
             return scores[self.main_score_function]['map@k'][max(self.map_at_k)]
 
+    def compute_metrices(self, model, corpus_model = None, corpus_embeddings: Tensor = None) -> Dict[str, float]:
+        if corpus_model is None:
+            corpus_model = model
+
+        max_k = max(max(self.mrr_at_k), max(self.ndcg_at_k), max(self.accuracy_at_k), max(self.precision_recall_at_k), max(self.map_at_k))
+
+        # Compute embedding for the queries
+        query_embeddings = model.encode(self.queries, show_progress_bar=self.show_progress_bar, batch_size=self.batch_size, convert_to_tensor=True)
+
+        queries_result_list = {}
+        for name in self.score_functions:
+            queries_result_list[name] = [[] for _ in range(len(query_embeddings))]
+
+        #Iterate over chunks of the corpus
+        for corpus_start_idx in trange(0, len(self.corpus), self.corpus_chunk_size, desc='Corpus Chunks', disable=not self.show_progress_bar):
+            corpus_end_idx = min(corpus_start_idx + self.corpus_chunk_size, len(self.corpus))
+
+            #Encode chunk of corpus
+            if corpus_embeddings is None:
+                sub_corpus_embeddings = corpus_model.encode(self.corpus[corpus_start_idx:corpus_end_idx], show_progress_bar=False, batch_size=self.batch_size, convert_to_tensor=True)
+            else:
+                sub_corpus_embeddings = corpus_embeddings[corpus_start_idx:corpus_end_idx]
+
+            #Compute cosine similarites
+            for name, score_function in self.score_functions.items():
+                pair_scores = score_function(query_embeddings, sub_corpus_embeddings)
+
+                #Get top-k values
+                pair_scores_top_k_values, pair_scores_top_k_idx = torch.topk(pair_scores, min(max_k, len(pair_scores[0])), dim=1, largest=True, sorted=False)
+                pair_scores_top_k_values = pair_scores_top_k_values.cpu().tolist()
+                pair_scores_top_k_idx = pair_scores_top_k_idx.cpu().tolist()
+
+                for query_itr in range(len(query_embeddings)):
+                    for sub_corpus_id, score in zip(pair_scores_top_k_idx[query_itr], pair_scores_top_k_values[query_itr]):
+                        corpus_id = self.corpus_ids[corpus_start_idx+sub_corpus_id]
+                        queries_result_list[name][query_itr].append({'corpus_id': corpus_id, 'score': score})
+
+        logger.info("Queries: {}".format(len(self.queries)))
+        logger.info("Corpus: {}\n".format(len(self.corpus)))
+
+        #Compute scores
+        scores = {name: self.compute_metrics(queries_result_list[name]) for name in self.score_functions}
+
+        #Output
+        for name in self.score_function_names:
+            logger.info("Score-Function: {}".format(name))
+            self.output_scores(scores[name])
+
+        return scores
 
 
     def compute_metrics(self, queries_result_list: List[object]):

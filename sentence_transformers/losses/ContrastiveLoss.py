@@ -1,9 +1,7 @@
 from enum import Enum
 from typing import Iterable, Dict
-
 import torch.nn.functional as F
 from torch import nn, Tensor
-
 from sentence_transformers.SentenceTransformer import SentenceTransformer
 
 
@@ -49,6 +47,15 @@ class ContrastiveLoss(nn.Module):
         self.model = model
         self.size_average = size_average
 
+    def get_config_dict(self):
+        distance_metric_name = self.distance_metric.__name__
+        for name, value in vars(SiameseDistanceMetric).items():
+            if value == self.distance_metric:
+                distance_metric_name = "SiameseDistanceMetric.{}".format(name)
+                break
+
+        return {'distance_metric': distance_metric_name, 'margin': self.margin, 'size_average': self.size_average}
+
     def forward(self, sentence_features: Iterable[Dict[str, Tensor]], labels: Tensor):
         reps = [self.model(sentence_feature)['sentence_embedding'] for sentence_feature in sentence_features]
         assert len(reps) == 2
@@ -56,6 +63,8 @@ class ContrastiveLoss(nn.Module):
         distances = self.distance_metric(rep_anchor, rep_other)
         losses = 0.5 * (labels.float() * distances.pow(2) + (1 - labels).float() * F.relu(self.margin - distances).pow(2))
         return losses.mean() if self.size_average else losses.sum()
+
+
 
 
 

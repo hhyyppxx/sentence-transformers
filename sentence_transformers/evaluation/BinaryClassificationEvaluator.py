@@ -50,9 +50,10 @@ class BinaryClassificationEvaluator(SentenceEvaluator):
 
         self.csv_file = "binary_classification_evaluation" + ("_"+name if name else '') + "_results.csv"
         self.csv_headers = ["epoch", "steps",
-                            "cosine_acc", "cosine_acc_threshold", "cosine_f1", "cosine_precision", "cosine_recall", "cosine_f1_threshold", "cosine_average_precision",
-                            "manhatten_acc", "manhatten_acc_threshold", "manhatten_f1", "manhatten_precision", "manhatten_recall", "manhatten_f1_threshold", "manhatten_average_precision",
-                            "eucledian_acc", "eucledian_acc_threshold", "eucledian_f1", "eucledian_precision", "eucledian_recall", "eucledian_f1_threshold", "eucledian_average_precision"]
+                            "cossim_accuracy", "cossim_accuracy_threshold", "cossim_f1", "cossim_precision", "cossim_recall", "cossim_f1_threshold", "cossim_ap",
+                            "manhatten_accuracy", "manhatten_accuracy_threshold", "manhatten_f1", "manhatten_precision", "manhatten_recall", "manhatten_f1_threshold", "manhatten_ap",
+                            "euclidean_accuracy", "euclidean_accuracy_threshold", "euclidean_f1", "euclidean_precision", "euclidean_recall", "euclidean_f1_threshold", "euclidean_ap",
+                            "dot_accuracy", "dot_accuracy_threshold", "dot_f1", "dot_precision", "dot_recall", "dot_f1_threshold", "dot_ap"]
 
 
     @classmethod
@@ -78,22 +79,54 @@ class BinaryClassificationEvaluator(SentenceEvaluator):
             out_txt = ":"
 
         logger.info("Binary Accuracy Evaluation of the model on " + self.name + " dataset" + out_txt)
-        embeddings1 = model.encode(self.sentences1, batch_size=self.batch_size,
-                                   show_progress_bar=self.show_progress_bar, convert_to_numpy=True)
-        embeddings2 = model.encode(self.sentences2, batch_size=self.batch_size,
-                                   show_progress_bar=self.show_progress_bar, convert_to_numpy=True)
 
-        cosine_scores = 1-paired_cosine_distances(embeddings1, embeddings2)
-        manhattan_distances = paired_manhattan_distances(embeddings1, embeddings2)
-        euclidean_distances = paired_euclidean_distances(embeddings1, embeddings2)
+        scores = self.compute_metrices(model)
 
 
-        labels = np.asarray(self.labels)
+        #Main score is the max of Average Precision (AP)
+        main_score = max(scores[short_name]['ap'] for short_name in scores)
 
         file_output_data = [epoch, steps]
 
-        main_score = None
-        for name, scores, reverse in [['Cosine-Similarity', cosine_scores, True], ['Manhatten-Distance', manhattan_distances, False], ['Euclidean-Distance', euclidean_distances, False]]:
+        for header_name in self.csv_headers:
+            if '_' in header_name:
+                sim_fct, metric = header_name.split("_", maxsplit=1)
+                file_output_data.append(scores[sim_fct][metric])
+
+        if output_path is not None and self.write_csv:
+            csv_path = os.path.join(output_path, self.csv_file)
+            if not os.path.isfile(csv_path):
+                with open(csv_path, newline='', mode="w", encoding="utf-8") as f:
+                    writer = csv.writer(f)
+                    writer.writerow(self.csv_headers)
+                    writer.writerow(file_output_data)
+            else:
+                with open(csv_path, newline='', mode="a", encoding="utf-8") as f:
+                    writer = csv.writer(f)
+                    writer.writerow(file_output_data)
+
+        return main_score
+
+
+    def compute_metrices(self, model):
+        sentences = list(set(self.sentences1 + self.sentences2))
+        embeddings = model.encode(sentences, batch_size=self.batch_size, show_progress_bar=self.show_progress_bar, convert_to_numpy=True)
+        emb_dict = {sent: emb for sent, emb in zip(sentences, embeddings)}
+        embeddings1 = [emb_dict[sent] for sent in self.sentences1]
+        embeddings2 = [emb_dict[sent] for sent in self.sentences2]
+
+        cosine_scores = 1 - paired_cosine_distances(embeddings1, embeddings2)
+        manhattan_distances = paired_manhattan_distances(embeddings1, embeddings2)
+        euclidean_distances = paired_euclidean_distances(embeddings1, embeddings2)
+
+        embeddings1_np = np.asarray(embeddings1)
+        embeddings2_np = np.asarray(embeddings2)
+        dot_scores = [np.dot(embeddings1_np[i], embeddings2_np[i]) for i in range(len(embeddings1_np))]
+
+
+        labels = np.asarray(self.labels)
+        output_scores = {}
+        for short_name, name, scores, reverse in [['cossim', 'Cosine-Similarity', cosine_scores, True], ['manhatten', 'Manhatten-Distance', manhattan_distances, False], ['euclidean', 'Euclidean-Distance', euclidean_distances, False], ['dot', 'Dot-Product', dot_scores, True]]:
             acc, acc_threshold = self.find_best_acc_and_threshold(scores, labels, reverse)
             f1, precision, recall, f1_threshold = self.find_best_f1_and_threshold(scores, labels, reverse)
             ap = average_precision_score(labels, scores * (1 if reverse else -1))
@@ -104,24 +137,20 @@ class BinaryClassificationEvaluator(SentenceEvaluator):
             logger.info("Recall with {}:             {:.2f}".format(name, recall * 100))
             logger.info("Average Precision with {}:  {:.2f}\n".format(name, ap * 100))
 
-            file_output_data.extend([acc, acc_threshold, f1, precision, recall, f1_threshold, ap])
+            output_scores[short_name] = {
+                'accuracy' : acc,
+                'accuracy_threshold': acc_threshold,
+                'f1': f1,
+                'f1_threshold': f1_threshold,
+                'precision': precision,
+                'recall': recall,
+                'ap': ap
+            }
 
-            if main_score is None: #Use AveragePrecision with Cosine-Similarity as main score
-                main_score = ap
 
-        if output_path is not None and self.write_csv:
-            csv_path = os.path.join(output_path, self.csv_file)
-            if not os.path.isfile(csv_path):
-                with open(csv_path, mode="w", encoding="utf-8") as f:
-                    writer = csv.writer(f)
-                    writer.writerow(self.csv_headers)
-                    writer.writerow(file_output_data)
-            else:
-                with open(csv_path, mode="a", encoding="utf-8") as f:
-                    writer = csv.writer(f)
-                    writer.writerow(file_output_data)
+        return output_scores
 
-        return main_score
+
 
     @staticmethod
     def find_best_acc_and_threshold(scores, labels, high_score_more_similar: bool):

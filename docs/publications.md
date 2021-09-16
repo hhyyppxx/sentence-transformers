@@ -1,7 +1,7 @@
 # Publications
 
 If you find this repository helpful, feel free to cite our publication [Sentence-BERT: Sentence Embeddings using Siamese BERT-Networks](https://arxiv.org/abs/1908.10084):
-``` 
+```bibtex 
 @inproceedings{reimers-2019-sentence-bert,
     title = "Sentence-BERT: Sentence Embeddings using Siamese BERT-Networks",
     author = "Reimers, Nils and Gurevych, Iryna",
@@ -15,7 +15,7 @@ If you find this repository helpful, feel free to cite our publication [Sentence
 
 
 If you use one of the multilingual models, feel free to cite our publication [Making Monolingual Sentence Embeddings Multilingual using Knowledge Distillation](https://arxiv.org/abs/2004.09813):
-``` 
+```bibtex 
 @inproceedings{reimers-2020-multilingual-sentence-bert,
     title = "Making Monolingual Sentence Embeddings Multilingual using Knowledge Distillation",
     author = "Reimers, Nils and Gurevych, Iryna",
@@ -29,20 +29,23 @@ If you use one of the multilingual models, feel free to cite our publication [Ma
 
 
 If you use the code for [data augmentation](https://github.com/UKPLab/sentence-transformers/tree/master/examples/training/data_augmentation), feel free to cite our publication [Augmented SBERT: Data Augmentation Method for Improving Bi-Encoders for Pairwise Sentence Scoring Tasks](https://arxiv.org/abs/2010.08240):
-``` 
-@article{thakur-2020-AugSBERT,
-    title = "Augmented SBERT: Data Augmentation Method for Improving Bi-Encoders for Pairwise Sentence Scoring Tasks",
-    author = "Thakur, Nandan and Reimers, Nils and Daxenberger, Johannes and  Gurevych, Iryna", 
-    journal= "arXiv preprint arXiv:2010.08240",
-    month = "10",
-    year = "2020",
-    url = "https://arxiv.org/abs/2010.08240",
+```bibtex 
+@inproceedings{thakur-2020-AugSBERT,
+    title = "Augmented {SBERT}: Data Augmentation Method for Improving Bi-Encoders for Pairwise Sentence Scoring Tasks",
+    author = "Thakur, Nandan and Reimers, Nils and Daxenberger, Johannes  and Gurevych, Iryna",
+    booktitle = "Proceedings of the 2021 Conference of the North American Chapter of the Association for Computational Linguistics: Human Language Technologies",
+    month = jun,
+    year = "2021",
+    address = "Online",
+    publisher = "Association for Computational Linguistics",
+    url = "https://www.aclweb.org/anthology/2021.naacl-main.28",
+    pages = "296--310",
 }
 ```
 
 If you use the models for [MS MARCO](pretrained-models/msmarco-v2.md), feel free to cite the paper: [The Curse of Dense Low-Dimensional Information Retrieval for Large Index Sizes](https://arxiv.org/abs/2012.14210)
-``` 
-@article{thakur-2020-AugSBERT,
+```bibtex
+@article{reimers-2020-Curse_Dense_Retrieval,
     title = "The Curse of Dense Low-Dimensional Information Retrieval for Large Index Sizes",
     author = "Reimers, Nils and  Gurevych, Iryna", 
     journal= "arXiv preprint arXiv:2012.14210",
@@ -52,6 +55,29 @@ If you use the models for [MS MARCO](pretrained-models/msmarco-v2.md), feel free
 }
 ```
 
+When you use the unsupervised learning example, please have a look at: [TSDAE: Using Transformer-based Sequential Denoising Auto-Encoderfor Unsupervised Sentence Embedding Learning](https://arxiv.org/abs/2104.06979):
+```bibtex 
+@article{wang-2021-TSDAE,
+    title = "TSDAE: Using Transformer-based Sequential Denoising Auto-Encoderfor Unsupervised Sentence Embedding Learning",
+    author = "Wang, Kexin and Reimers, Nils and Gurevych, Iryna", 
+    journal= "arXiv preprint arXiv:2104.06979",
+    month = "4",
+    year = "2021",
+    url = "https://arxiv.org/abs/2104.06979",
+}
+```
+
+When you use the GenQ learning example, please have a look at: [BEIR: A Heterogenous Benchmark for Zero-shot Evaluation of Information Retrieval Models](https://arxiv.org/abs/2104.08663):
+```bibtex  
+@article{thakur-2021-BEIR,
+    title = "BEIR: A Heterogenous Benchmark for Zero-shot Evaluation of Information Retrieval Models",
+    author = {Thakur, Nandan and Reimers, Nils and R{\"{u}}ckl{\'{e}}, Andreas and Srivastava, Abhishek and Gurevych, Iryna}, 
+    journal= "arXiv preprint arXiv:2104.08663",
+    month = "4",
+    year = "2021",
+    url = "https://arxiv.org/abs/2104.08663",
+}
+```
 
 **Repositories using SentenceTransformers**
 - **[haystack](https://github.com/deepset-ai/haystack)** - Neural Search / Q&A

@@ -1,10 +1,10 @@
 # Semantic Textual Similarity
 
-Once you have  [sentence embeddings computed](computing_sentence_embeddings.md), you usually want to compare them to each other. Here, I show you how you can compute the cosine similarity between embeddings, for example, to measure the semantic similarity of two texts.
+Once you have  [sentence embeddings computed](../../examples/applications/computing-embeddings/README.md), you usually want to compare them to each other. Here, I show you how you can compute the cosine similarity between embeddings, for example, to measure the semantic similarity of two texts.
 
 ```python
 from sentence_transformers import SentenceTransformer, util
-model = SentenceTransformer('paraphrase-distilroberta-base-v1')
+model = SentenceTransformer('all-MiniLM-L6-v2')
 
 # Two lists of sentences
 sentences1 = ['The cat sits outside',
@@ -36,7 +36,7 @@ You can use this function also to find out the pairs with the highest cosine sim
 ```python
 from sentence_transformers import SentenceTransformer, util
 
-model = SentenceTransformer('paraphrase-distilroberta-base-v1')
+model = SentenceTransformer('all-MiniLM-L6-v2')
 
 # Single list of sentences
 sentences = ['The cat sits outside',
@@ -68,4 +68,4 @@ for pair in pairs[0:10]:
     print("{} \t\t {} \t\t Score: {:.4f}".format(sentences[i], sentences[j], pair['score']))
 ```
 
-Note, in the above approach we use a brute-force approach to find the highest scoring pairs, which has a quadratic complexity. For long lists of sentences, this might be infeasible. If you want find the highest scoring pairs in a long list of sentences, have a look at [Paraphrase Mining](paraphrase_mining.md).
+Note, in the above approach we use a brute-force approach to find the highest scoring pairs, which has a quadratic complexity. For long lists of sentences, this might be infeasible. If you want find the highest scoring pairs in a long list of sentences, have a look at [Paraphrase Mining](../../examples/applications/paraphrase-mining/README.md).

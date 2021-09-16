@@ -1,6 +1,6 @@
 import torch
 from torch import nn, Tensor
-from typing import Union, Tuple, List, Iterable, Dict
+from typing import Union, Tuple, List, Iterable, Dict, Callable
 from ..SentenceTransformer import SentenceTransformer
 import logging
 
@@ -18,6 +18,7 @@ class SoftmaxLoss(nn.Module):
     :param concatenation_sent_rep: Concatenate vectors u,v for the softmax classifier?
     :param concatenation_sent_difference: Add abs(u-v) for the softmax classifier?
     :param concatenation_sent_multiplication: Add u*v for the softmax classifier?
+    :param loss_fct: Optional: Custom pytorch loss function. If not set, uses nn.CrossEntropyLoss()
 
     Example::
 
@@ -25,7 +26,7 @@ class SoftmaxLoss(nn.Module):
         from sentence_transformers.readers import InputExample
 
         model = SentenceTransformer('distilbert-base-nli-mean-tokens')
-        train_examples = [InputExample(InputExample(texts=['First pair, sent A', 'First pair, sent B'], label=0),
+        train_examples = [InputExample(texts=['First pair, sent A', 'First pair, sent B'], label=0),
             InputExample(texts=['Second Pair, sent A', 'Second Pair, sent B'], label=3)]
         train_dataset = SentencesDataset(train_examples, model)
         train_dataloader = DataLoader(train_dataset, shuffle=True, batch_size=train_batch_size)
@@ -37,7 +38,8 @@ class SoftmaxLoss(nn.Module):
                  num_labels: int,
                  concatenation_sent_rep: bool = True,
                  concatenation_sent_difference: bool = True,
-                 concatenation_sent_multiplication: bool = False):
+                 concatenation_sent_multiplication: bool = False,
+                 loss_fct: Callable = nn.CrossEntropyLoss()):
         super(SoftmaxLoss, self).__init__()
         self.model = model
         self.num_labels = num_labels
@@ -54,6 +56,7 @@ class SoftmaxLoss(nn.Module):
             num_vectors_concatenated += 1
         logger.info("Softmax loss: #Vectors concatenated: {}".format(num_vectors_concatenated))
         self.classifier = nn.Linear(num_vectors_concatenated * sentence_embedding_dimension, num_labels)
+        self.loss_fct = loss_fct
 
     def forward(self, sentence_features: Iterable[Dict[str, Tensor]], labels: Tensor):
         reps = [self.model(sentence_feature)['sentence_embedding'] for sentence_feature in sentence_features]
@@ -73,10 +76,9 @@ class SoftmaxLoss(nn.Module):
         features = torch.cat(vectors_concat, 1)
 
         output = self.classifier(features)
-        loss_fct = nn.CrossEntropyLoss()
 
         if labels is not None:
-            loss = loss_fct(output, labels.view(-1))
+            loss = self.loss_fct(output, labels.view(-1))
             return loss
         else:
             return reps, output

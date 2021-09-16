@@ -29,7 +29,7 @@ The usage is as simple as:
 .. code-block:: python
 
     from sentence_transformers import SentenceTransformer
-    model = SentenceTransformer('paraphrase-distilroberta-base-v1')
+    model = SentenceTransformer('paraphrase-MiniLM-L6-v2')
 
     #Our sentences we like to encode
     sentences = ['This framework generates embeddings for each input sentence',
@@ -51,93 +51,17 @@ The usage is as simple as:
 Performance
 =========================
 
-Our models are evaluated extensively and achieve state-of-the-art performance on various tasks. Further, the code is tuned to provide the highest possible speed.
+Our models are evaluated extensively and achieve state-of-the-art performance on various tasks. Further, the code is tuned to provide the highest possible speed. Have a look at [Pre-Trained Models](https://www.sbert.net/docs/pretrained_models.html#sentence-embedding-models) for an overview of available models and the respective performance on different tasks.
 
 
-.. raw:: html
 
-    <table class="docutils">
-    <thead>
-    <tr>
-    <th>Model</th>
-    <th align="center">STS benchmark</th>
-    <th align="center">SentEval</th>
-    </tr>
-    </thead>
-    <tbody>
-    <tr>
-    <td>Avg. GloVe embeddings</td>
-    <td align="center">58.02</td>
-    <td align="center">81.52</td>
-    </tr>
-    <tr>
-    <td>BERT-as-a-service avg. embeddings</td>
-    <td align="center">46.35</td>
-    <td align="center">84.04</td>
-    </tr>
-    <tr>
-    <td>BERT-as-a-service CLS-vector</td>
-    <td align="center">16.50</td>
-    <td align="center">84.66</td>
-    </tr>
-    <tr>
-    <td>InferSent - GloVe</td>
-    <td align="center">68.03</td>
-    <td align="center">85.59</td>
-    </tr>
-    <tr>
-    <td>Universal Sentence Encoder</td>
-    <td align="center">74.92</td>
-    <td align="center">85.10</td>
-    </tr>
-    <tr>
-    <td><strong>Sentence Transformer Models</strong></td>
-    <td align="center"></td>
-    <td align="center"></td>
-    </tr>
-    <tr>
-    <td>nli-bert-base</td>
-    <td align="center">77.12</td>
-    <td align="center">86.37</td>
-    </tr>
-    <tr>
-    <td>nli-bert-large</td>
-    <td align="center">79.19</td>
-    <td align="center">87.78</td>
-    </tr>
-    <tr>
-    <td>stsb-bert-base</td>
-    <td align="center">85.14</td>
-    <td align="center">86.07</td>
-    </tr>
-    <tr>
-    <td>stsb-bert-large</td>
-    <td align="center">85.29</td>
-    <td align="center">86.66</td>
-    </tr>
-    <tr>
-    <td>stsb-roberta-base</td>
-    <td align="center">85.44</td>
-    <td align="center">-</td>
-    </tr>
-    <tr>
-    <td>stsb-roberta-large</td>
-    <td align="center">86.39</td>
-    <td align="center">-</td>
-    </tr>
-    <tr>
-    <td>stsb-distilbert-base</td>
-    <td align="center">85.16</td>
-    <td align="center">-</td>
-    </tr>
-    </tbody>
-    </table>
+
 
 
 Contact
 =========================
 
-Contact person: Nils Reimers, reimers@ukp.informatik.tu-darmstadt.de
+Contact person: Nils Reimers, info@nils-reimers.de
 
 https://www.ukp.tu-darmstadt.de/
 
@@ -152,7 +76,7 @@ Citing & Authors
 
 If you find this repository helpful, feel free to cite our publication `Sentence-BERT: Sentence Embeddings using Siamese BERT-Networks <https://arxiv.org/abs/1908.10084>`_:
 
- .. code-block:: javascript
+ .. code-block:: bibtex
 
   @inproceedings{reimers-2019-sentence-bert,
     title = "Sentence-BERT: Sentence Embeddings using Siamese BERT-Networks",
@@ -168,7 +92,7 @@ If you find this repository helpful, feel free to cite our publication `Sentence
 
 If you use one of the multilingual models, feel free to cite our publication `Making Monolingual Sentence Embeddings Multilingual using Knowledge Distillation <https://arxiv.org/abs/2004.09813>`_:
 
- .. code-block:: javascript
+ .. code-block:: bibtex
 
   @inproceedings{reimers-2020-multilingual-sentence-bert,
     title = "Making Monolingual Sentence Embeddings Multilingual using Knowledge Distillation",
@@ -184,15 +108,18 @@ If you use one of the multilingual models, feel free to cite our publication `Ma
 
 If you use the code for `data augmentation <https://github.com/UKPLab/sentence-transformers/tree/master/examples/training/data_augmentation>`_, feel free to cite our publication `Augmented SBERT: Data Augmentation Method for Improving Bi-Encoders for Pairwise Sentence Scoring Tasks <https://arxiv.org/abs/2010.08240>`_:
 
- .. code-block:: javascript
+ .. code-block:: bibtex
 
-  @article{thakur-2020-AugSBERT,
-    title = "Augmented SBERT: Data Augmentation Method for Improving Bi-Encoders for Pairwise Sentence Scoring Tasks",
-    author = "Thakur, Nandan and Reimers, Nils and Daxenberger, Johannes and  Gurevych, Iryna",
-    journal= "arXiv preprint arXiv:2010.08240",
-    month = "10",
-    year = "2020",
-    url = "https://arxiv.org/abs/2010.08240",
+  @inproceedings{thakur-2020-AugSBERT,
+    title = "Augmented {SBERT}: Data Augmentation Method for Improving Bi-Encoders for Pairwise Sentence Scoring Tasks",
+    author = "Thakur, Nandan and Reimers, Nils and Daxenberger, Johannes  and Gurevych, Iryna",
+    booktitle = "Proceedings of the 2021 Conference of the North American Chapter of the Association for Computational Linguistics: Human Language Technologies",
+    month = jun,
+    year = "2021",
+    address = "Online",
+    publisher = "Association for Computational Linguistics",
+    url = "https://www.aclweb.org/anthology/2021.naacl-main.28",
+    pages = "296--310",
   }
 
 
@@ -213,11 +140,11 @@ If you use the code for `data augmentation <https://github.com/UKPLab/sentence-t
 
    examples/applications/computing-embeddings/README
    docs/usage/semantic_textual_similarity
+   examples/applications/semantic-search/README
+   examples/applications/retrieve_rerank/README
    examples/applications/clustering/README
    examples/applications/paraphrase-mining/README
    examples/applications/parallel-sentence-mining/README
-   examples/applications/semantic-search/README
-   examples/applications/retrieve_rerank/README
    examples/applications/cross-encoder/README
    examples/applications/image-search/README
 
@@ -237,9 +164,21 @@ If you use the code for `data augmentation <https://github.com/UKPLab/sentence-t
 
    examples/training/sts/README
    examples/training/nli/README
+   examples/training/paraphrases/README
    examples/training/quora_duplicate_questions/README
    examples/training/ms_marco/README
 
+.. toctree::
+   :maxdepth: 2
+   :caption: Unsupervised Learning
+
+   examples/unsupervised_learning/README
+   examples/unsupervised_learning/TSDAE/README
+   examples/unsupervised_learning/SimCSE/README
+   examples/unsupervised_learning/CT/README
+   examples/unsupervised_learning/CT_In-Batch_Negatives/README
+   examples/unsupervised_learning/MLM/README
+   examples/unsupervised_learning/query_generation/README
 
 .. toctree::
    :maxdepth: 1

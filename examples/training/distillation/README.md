@@ -19,7 +19,7 @@ Option 2) works usually better, as we keep most of the weights from the teacher.
 weights in the student from scratch.
 
 ## Speed - Performance Trade-Off
-Smaller models are faster, but show a (slightly) worse performance when evaluated on down stream tasks. To get an impression of this trade-off, we show some numbers of the *roberta-base-nli-stsb-mean-tokens* model with different number of layers:
+Smaller models are faster, but show a (slightly) worse performance when evaluated on down stream tasks. To get an impression of this trade-off, we show some numbers of the *stsb-roberta-base* model with different number of layers:
 
 | Layers | STSbenchmark Performance | Performance Decrease |Speed (Sent. / Sec. on V100-GPU) |
 | ---- |:----:|:----:|:----:|
@@ -39,11 +39,11 @@ By default, the pretrained models output embeddings with size 768 (base-models) 
 
 This dimensionality reduction technique can easily be applied to existent models. We could even reduce the embeddings size to 32, reducing the storage requirment by factor 24 (performance decreases to 81.82). 
 
-Note: This technique neither improves the runtime, nor the memory requirement for running the model. It only reduces the needed space to store embeddings, for example, for [semantic search](https://www.sbert.net/docs/usage/semantic_search.html).
+Note: This technique neither improves the runtime, nor the memory requirement for running the model. It only reduces the needed space to store embeddings, for example, for [semantic search](../../applications/semantic-search/README.md).
 
 ## Quantization
 A [quantized model](https://pytorch.org/docs/stable/quantization.html) executes some or all of the operations with integers rather than floating point values. This allows for a more compact models and the use of high performance vectorized operations on many hardware platforms.
 
-For models that are run on **CPUs**, this can yield 40% smaller models and a faster inference time of 15-50%. Model quantization is (as of know) not supported for GPUs by PyTorch.
+For models that are run on **CPUs**, this can yield 40% smaller models and a faster inference time: Dependining on the CPU, speedup are between 15% and 400%. Model quantization is (as of now) not supported for GPUs by PyTorch.
 
 For an example, see [model_quantization.py](model_quantization.py)

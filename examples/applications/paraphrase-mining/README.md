@@ -1,6 +1,6 @@
 # Paraphrase Mining
 
-Paraphrase mining is the task of finding pharaphrases (texts with identical / similar meaning) in a large corpus of sentences. In [Semantic Textual Similarity](../../../docs/usage/semantic_textual_similarity.md) we saw a simplified version of finding paraphrases in a list of sentences. The approach presented there used a brute-force approach to score and rank all pairs. 
+Paraphrase mining is the task of finding paraphrases (texts with identical / similar meaning) in a large corpus of sentences. In [Semantic Textual Similarity](../../../docs/usage/semantic_textual_similarity.md) we saw a simplified version of finding paraphrases in a list of sentences. The approach presented there used a brute-force approach to score and rank all pairs. 
 
 However, as this has a quadratic runtime, it fails to scale to large (10,000 and more) collections of sentences.
 
@@ -8,7 +8,7 @@ For larger collections, *util* offers the *paraphrase_mining* function that can 
 ```python
 from sentence_transformers import SentenceTransformer, util
 
-model = SentenceTransformer('distilbert-base-nli-stsb-mean-tokens')
+model = SentenceTransformer('all-MiniLM-L6-v2')
 
 # Single list of sentences - Possible tens of thousands of sentences
 sentences = ['The cat sits outside',

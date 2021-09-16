@@ -62,6 +62,34 @@ def dot_score(a: Tensor, b: Tensor):
     return torch.mm(a, b.transpose(0, 1))
 
 
+def pairwise_dot_score(a: Tensor, b: Tensor):
+    """
+   Computes the pairwise dot-product dot_prod(a[i], b[i])
+   :return: Vector with res[i] = dot_prod(a[i], b[i])
+   """
+    if not isinstance(a, torch.Tensor):
+        a = torch.tensor(a)
+
+    if not isinstance(b, torch.Tensor):
+        b = torch.tensor(b)
+
+    return (a * b).sum(dim=-1)
+
+
+def pairwise_cos_sim(a: Tensor, b: Tensor):
+    """
+   Computes the pairwise cossim cos_sim(a[i], b[i])
+   :return: Vector with res[i] = cos_sim(a[i], b[i])
+   """
+    if not isinstance(a, torch.Tensor):
+        a = torch.tensor(a)
+
+    if not isinstance(b, torch.Tensor):
+        b = torch.tensor(b)
+
+    return pairwise_dot_score(normalize_embeddings(a), normalize_embeddings(b))
+
+
 def normalize_embeddings(embeddings: Tensor):
     """
     Normalizes the embeddings matrix, so that each sentence embedding has unit length
@@ -300,3 +328,139 @@ def import_from_string(dotted_path):
     except AttributeError:
         msg = 'Module "%s" does not define a "%s" attribute/class' % (module_path, class_name)
         raise ImportError(msg)
+
+
+def community_detection(embeddings, threshold=0.75, min_community_size=10, init_max_size=1000):
+    """
+    Function for Fast Community Detection
+
+    Finds in the embeddings all communities, i.e. embeddings that are close (closer than threshold).
+
+    Returns only communities that are larger than min_community_size. The communities are returned
+    in decreasing order. The first element in each list is the central point in the community.
+    """
+
+    # Compute cosine similarity scores
+    cos_scores = cos_sim(embeddings, embeddings)
+
+    # Minimum size for a community
+    top_k_values, _ = cos_scores.topk(k=min_community_size, largest=True)
+
+    # Filter for rows >= min_threshold
+    extracted_communities = []
+    for i in range(len(top_k_values)):
+        if top_k_values[i][-1] >= threshold:
+            new_cluster = []
+
+            # Only check top k most similar entries
+            top_val_large, top_idx_large = cos_scores[i].topk(k=init_max_size, largest=True)
+            top_idx_large = top_idx_large.tolist()
+            top_val_large = top_val_large.tolist()
+
+            if top_val_large[-1] < threshold:
+                for idx, val in zip(top_idx_large, top_val_large):
+                    if val < threshold:
+                        break
+
+                    new_cluster.append(idx)
+            else:
+                # Iterate over all entries (slow)
+                for idx, val in enumerate(cos_scores[i].tolist()):
+                    if val >= threshold:
+                        new_cluster.append(idx)
+
+            extracted_communities.append(new_cluster)
+
+    # Largest cluster first
+    extracted_communities = sorted(extracted_communities, key=lambda x: len(x), reverse=True)
+
+    # Step 2) Remove overlapping communities
+    unique_communities = []
+    extracted_ids = set()
+
+    for community in extracted_communities:
+        add_cluster = True
+        for idx in community:
+            if idx in extracted_ids:
+                add_cluster = False
+                break
+
+        if add_cluster:
+            unique_communities.append(community)
+            for idx in community:
+                extracted_ids.add(idx)
+
+    return unique_communities
+
+
+##################
+#
+######################
+
+from typing import Dict, Optional, Union
+from pathlib import Path
+from huggingface_hub.constants import HUGGINGFACE_HUB_CACHE
+from huggingface_hub import HfApi, hf_hub_url, cached_download
+from huggingface_hub.snapshot_download import REPO_ID_SEPARATOR
+import fnmatch
+
+def snapshot_download(
+    repo_id: str,
+    revision: Optional[str] = None,
+    cache_dir: Union[str, Path, None] = None,
+    library_name: Optional[str] = None,
+    library_version: Optional[str] = None,
+    user_agent: Union[Dict, str, None] = None,
+    ignore_files: Optional[List[str]] = None
+) -> str:
+    """
+    Method derived from huggingface_hub.
+    Adds a new parameters 'ignore_files', which allows to ignore certain files / file-patterns
+    """
+    if cache_dir is None:
+        cache_dir = HUGGINGFACE_HUB_CACHE
+    if isinstance(cache_dir, Path):
+        cache_dir = str(cache_dir)
+
+    _api = HfApi()
+    model_info = _api.model_info(repo_id=repo_id, revision=revision)
+
+    storage_folder = os.path.join(
+        cache_dir, repo_id.replace("/", REPO_ID_SEPARATOR) + "." + model_info.sha
+    )
+
+    for model_file in model_info.siblings:
+        if ignore_files is not None:
+            skip_download  = False
+            for pattern in ignore_files:
+                if fnmatch.fnmatch(model_file.rfilename, pattern):
+                    skip_download = True
+                    break
+
+            if skip_download:
+                continue
+
+        url = hf_hub_url(
+            repo_id, filename=model_file.rfilename, revision=model_info.sha
+        )
+        relative_filepath = os.path.join(*model_file.rfilename.split("/"))
+
+        # Create potential nested dir
+        nested_dirname = os.path.dirname(
+            os.path.join(storage_folder, relative_filepath)
+        )
+        os.makedirs(nested_dirname, exist_ok=True)
+
+        path = cached_download(
+            url,
+            cache_dir=storage_folder,
+            force_filename=relative_filepath,
+            library_name=library_name,
+            library_version=library_version,
+            user_agent=user_agent,
+        )
+
+        if os.path.exists(path + ".lock"):
+            os.remove(path + ".lock")
+
+    return storage_folder

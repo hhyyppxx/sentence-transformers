@@ -13,6 +13,7 @@ class Pooling(nn.Module):
     You can concatenate multiple poolings together.
 
     :param word_embedding_dimension: Dimensions for the word embeddings
+    :param pooling_mode: Can be a string: mean/max/cls. If set, overwrites the other pooling_mode_* settings
     :param pooling_mode_cls_token: Use the first token (CLS token) as text representations
     :param pooling_mode_max_tokens: Use max in each dimension over all tokens.
     :param pooling_mode_mean_tokens: Perform mean-pooling
@@ -20,6 +21,7 @@ class Pooling(nn.Module):
     """
     def __init__(self,
                  word_embedding_dimension: int,
+                 pooling_mode: str = None,
                  pooling_mode_cls_token: bool = False,
                  pooling_mode_max_tokens: bool = False,
                  pooling_mode_mean_tokens: bool = True,
@@ -29,6 +31,13 @@ class Pooling(nn.Module):
 
         self.config_keys = ['word_embedding_dimension',  'pooling_mode_cls_token', 'pooling_mode_mean_tokens', 'pooling_mode_max_tokens', 'pooling_mode_mean_sqrt_len_tokens']
 
+        if pooling_mode is not None:        #Set pooling mode by string
+            pooling_mode = pooling_mode.lower()
+            assert pooling_mode in ['mean', 'max', 'cls']
+            pooling_mode_cls_token = (pooling_mode == 'cls')
+            pooling_mode_max_tokens = (pooling_mode == 'max')
+            pooling_mode_mean_tokens = (pooling_mode == 'mean')
+
         self.word_embedding_dimension = word_embedding_dimension
         self.pooling_mode_cls_token = pooling_mode_cls_token
         self.pooling_mode_mean_tokens = pooling_mode_mean_tokens
@@ -37,6 +46,26 @@ class Pooling(nn.Module):
 
         pooling_mode_multiplier = sum([pooling_mode_cls_token, pooling_mode_max_tokens, pooling_mode_mean_tokens, pooling_mode_mean_sqrt_len_tokens])
         self.pooling_output_dimension = (pooling_mode_multiplier * word_embedding_dimension)
+
+
+    def __repr__(self):
+        return "Pooling({})".format(self.get_config_dict())
+
+    def get_pooling_mode_str(self) -> str:
+        """
+        Returns the pooling mode as string
+        """
+        modes = []
+        if self.pooling_mode_cls_token:
+            modes.append('cls')
+        if self.pooling_mode_mean_tokens:
+            modes.append('mean')
+        if self.pooling_mode_max_tokens:
+            modes.append('max')
+        if self.pooling_mode_mean_sqrt_len_tokens:
+            modes.append('mean_sqrt_len_tokens')
+
+        return "+".join(modes)
 
     def forward(self, features: Dict[str, Tensor]):
         token_embeddings = features['token_embeddings']

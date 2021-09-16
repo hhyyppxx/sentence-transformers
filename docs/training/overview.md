@@ -15,7 +15,7 @@ For sentence / text embeddings, we want to map a variable length input text to a
 ![SBERT  Network Architecture](../img/SBERT_Architecture.png "SBERT Siamese Architecture")
 
 
-We feed the input sentence or text into a transformer network like BERT. BERT produces contextualized word embeddings for all input tokens in our text. As we want a fixed-sized output representation (vector u), we need a pooling layer. Different pooling options are available, the most basic one is mean-pooling: We simply average all contextualized word embeddings BERT is giving us. This gives us a fixed 768 dimensional output vector independet how long our input text was.
+We feed the input sentence or text into a transformer network like BERT. BERT produces contextualized word embeddings for all input tokens in our text. As we want a fixed-sized output representation (vector u), we need a pooling layer. Different pooling options are available, the most basic one is mean-pooling: We simply average all contextualized word embeddings BERT is giving us. This gives us a fixed 768 dimensional output vector independent how long our input text was.
 
 The depicted architecture, consisting on a BERT layer and a pooling layer is one final SentenceTransformer model.
 
@@ -172,7 +172,7 @@ Loading trained models is easy. You can specify a path:
 ```python
 model = SentenceTransformer('./my/path/to/model/')
 ```
-Note: It is important that a / or \ is the path, otherwise, it is not recognized as a path.
+Note: It is important that a / or \ is present in the path, otherwise, it is not recognized as a path.
 
 You can also host the training output on a server and download it:
  ```python
@@ -188,7 +188,7 @@ This code allows multi-task learning with training data from different datasets 
 
 ## Adding Special Tokens
 
-Depending on the task, you might want to special tokens to the tokenizer and the Transformer model. You can use the following code-snippet to achieve this:
+Depending on the task, you might want to add special tokens to the tokenizer and the Transformer model. You can use the following code-snippet to achieve this:
 ```python
 from sentence_transformers import SentenceTransformer, models
 word_embedding_model = models.Transformer('bert-base-uncased')
@@ -204,7 +204,7 @@ model = SentenceTransformer(modules=[word_embedding_model, pooling_model])
 If you want to extend the vocabulary for an existent SentenceTransformer model, you can use the following code:
 ```python
 from sentence_transformers import SentenceTransformer, models
-model = SentenceTransformer('paraphrase-distilroberta-base-v1')
+model = SentenceTransformer('all-MiniLM-L6-v2')
 word_embedding_model = model._first_module()
 
 tokens = ["[DOC]", "[QRY]"]
