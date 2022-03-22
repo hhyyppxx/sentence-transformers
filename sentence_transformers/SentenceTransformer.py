@@ -38,8 +38,14 @@ class SentenceTransformer(nn.Sequential):
     :param modules: This parameter can be used to create custom SentenceTransformer models from scratch.
     :param device: Device (like 'cuda' / 'cpu') that should be used for computation. If None, checks if a GPU can be used.
     :param cache_folder: Path to store models
+    :param use_auth_token: HuggingFace authentication token to download private models.
     """
-    def __init__(self, model_name_or_path: Optional[str] = None, modules: Optional[Iterable[nn.Module]] = None, device: Optional[str] = None, cache_folder: Optional[str] = None):
+    def __init__(self, model_name_or_path: Optional[str] = None,
+                 modules: Optional[Iterable[nn.Module]] = None,
+                 device: Optional[str] = None,
+                 cache_folder: Optional[str] = None,
+                 use_auth_token: Union[bool, str, None] = None
+                 ):
         self._model_card_vars = {}
         self._model_card_text = None
         self._model_config = {}
@@ -76,15 +82,13 @@ class SentenceTransformer(nn.Sequential):
 
                 model_path = os.path.join(cache_folder, model_name_or_path.replace("/", "_"))
 
-                if not os.path.exists(model_path):
-                    # Download from hub
-                    model_path_tmp = snapshot_download(model_name_or_path,
-                                                       cache_dir=cache_folder,
-                                                       library_name='sentence-transformers',
-                                                       library_version=__version__,
-                                                       ignore_files=['flax_model.msgpack', 'rust_model.ot', 'tf_model.h5'])
-
-                    os.rename(model_path_tmp, model_path)
+                # Download from hub with caching
+                snapshot_download(model_name_or_path,
+                                    cache_dir=cache_folder,
+                                    library_name='sentence-transformers',
+                                    library_version=__version__,
+                                    ignore_files=['flax_model.msgpack', 'rust_model.ot', 'tf_model.h5'],
+                                    use_auth_token=use_auth_token)
 
             if os.path.exists(os.path.join(model_path, 'modules.json')):    #Load as SentenceTransformer model
                 modules = self._load_sbert_model(model_path)
@@ -117,7 +121,7 @@ class SentenceTransformer(nn.Sequential):
         :param sentences: the sentences to embed
         :param batch_size: the batch size used for the computation
         :param show_progress_bar: Output a progress bar when encode sentences
-        :param output_value:  Default sentence_embedding, to get sentence embeddings. Can be set to token_embeddings to get wordpiece token embeddings.
+        :param output_value:  Default sentence_embedding, to get sentence embeddings. Can be set to token_embeddings to get wordpiece token embeddings. Set to None, to get all output values
         :param convert_to_numpy: If true, the output is a list of numpy vectors. Else, it is a list of pytorch tensors.
         :param convert_to_tensor: If true, you get one large tensor as return. Overwrites any setting from convert_to_numpy
         :param device: Which torch.device to use for the computation
@@ -133,7 +137,7 @@ class SentenceTransformer(nn.Sequential):
         if convert_to_tensor:
             convert_to_numpy = False
 
-        if output_value == 'token_embeddings':
+        if output_value != 'sentence_embedding':
             convert_to_tensor = False
             convert_to_numpy = False
 
@@ -167,6 +171,11 @@ class SentenceTransformer(nn.Sequential):
                             last_mask_id -= 1
 
                         embeddings.append(token_emb[0:last_mask_id+1])
+                elif output_value is None:  #Return all outputs
+                    embeddings = []
+                    for sent_idx in range(len(out_features['sentence_embedding'])):
+                        row =  {name: out_features[name][sent_idx] for name in out_features}
+                        embeddings.append(row)
                 else:   #Sentence embeddings
                     embeddings = out_features[output_value]
                     embeddings = embeddings.detach()
@@ -873,7 +882,7 @@ class SentenceTransformer(nn.Sequential):
     @tokenizer.setter
     def tokenizer(self, value):
         """
-        Property to set the tokenizer that is should used by this model
+        Property to set the tokenizer that should be used by this model
         """
         self._first_module().tokenizer = value
 
